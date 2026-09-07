@@ -1,0 +1,46 @@
+#include <Wire.h>
+#include "mpu6500.h"
+
+bfs::Mpu6500 MPU;
+
+void setup() {
+  Serial.begin(9600); //Begin Serial for seeing data
+
+  // Start I2C
+  Wire.begin(22, 21);      // SDA = 22, SCL = 21
+  Wire.setClock(400000);   // 400 kHz I2C speed
+
+  // Tell the library which I2C bus and address to use
+  MPU.Config(&Wire, bfs::Mpu6500::I2C_ADDR_PRIM);
+
+  // Start the MPU6500
+  if (MPU.Begin()) {
+    Serial.println("MPU6500 connected");
+  } else {
+    Serial.println("MPU6500 failed");
+  }
+}
+
+void loop() {
+
+  if (MPU.Read()) {
+
+    Serial.print("Accel: ");
+    Serial.print(MPU.accel_x_mps2());
+    Serial.print(" ");
+    Serial.print(MPU.accel_y_mps2());
+    Serial.print(" ");
+    Serial.println(MPU.accel_z_mps2());
+
+    Serial.print("Gyro: ");
+    Serial.print(MPU.gyro_x_radps());
+    Serial.print(" ");
+    Serial.print(MPU.gyro_y_radps());
+    Serial.print(" ");
+    Serial.println(MPU.gyro_z_radps());
+
+    Serial.println();
+  }
+
+  delay(200);
+}
