@@ -3,6 +3,13 @@
 
 bfs::Mpu6500 MPU;
 
+<<<<<<< HEAD
+=======
+float yAccel;
+float tilt;
+
+
+>>>>>>> MPU
 void setup() {
   Serial.begin(9600); //Begin Serial for seeing data
 
@@ -25,6 +32,7 @@ void loop() {
 
   if (MPU.Read()) {
 
+<<<<<<< HEAD
     Serial.print("Accel: ");
     Serial.print(MPU.accel_x_mps2());
     Serial.print(" ");
@@ -40,6 +48,13 @@ void loop() {
     Serial.println(MPU.gyro_z_radps());
 
     Serial.println();
+=======
+    yAccel = MPU.accel_y_mps2();
+    tilt = asin(yAccel/9.81)*180/PI;
+    Serial.println(tilt);
+
+    
+>>>>>>> MPU
   }
 
   delay(200);
