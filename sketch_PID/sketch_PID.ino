@@ -1,5 +1,10 @@
-const int INPUT_PIN = A0;
-const int OUTPUT_PIN = DD3;
+int PWMA = 23; // Initialising driver pins 
+int AIN1=27;
+int AIN2=26;
+
+int PWMB = 19;
+int BIN1=13;
+int BIN2=14;
 
 double dt, last_time;
 double integral, previous, output = 0;
