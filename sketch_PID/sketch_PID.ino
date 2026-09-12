@@ -14,7 +14,7 @@ int PWMB = 19; // Initialising MOTOR B driver pins
 int BIN1=13;
 int BIN2=14;
 
-double dt, lastTime, aim = 0; // aim = desired angle of lean for the robot (0 being stood vertical)
+double dt, lastTime, filteredTilt, aim = 0; // aim = desired angle of lean for the robot (0 being stood vertical)
 double integral, previous, output = 0;
 double kp, ki, kd;
 
@@ -22,7 +22,7 @@ void setup()
 {
   //PID Control Gains
 
-  kp = 0.8;
+  kp = 3;
   ki = 0;  
   kd = 0;
 
@@ -70,8 +70,13 @@ void loop() {
 
     tilt = asin(yAccel/9.81)*180/PI; // converting to degrees
 
+    double gyroY = MPU.gyro_y_radps() * 180.0 / PI; // converting Gyro Y to degrees
 
-    if (abs(tilt) > 35) {
+
+    filteredTilt = 0.98 * (filteredTilt + gyroY * dt) + 0.02 * tilt; // calculate tilt with complementary filter
+
+
+    if (abs(filteredTilt) > 35) {
 
      analogWrite(PWMA, 0);
      analogWrite(PWMB, 0);
@@ -81,19 +86,27 @@ void loop() {
     }
 
 
-    double error = aim - tilt;  // error calc
+    double error = aim - filteredTilt;  // error calc
 
-    // PID calculation
+    // PID calc
     output = pid(error);
 
     // Motor power as magnitude of PID output
-    int motorPower = constrain(abs(output), 0, 250);
+    int motorPowerA = 0;
+    int motorPowerB = 0;
+
+    // Small deadzone around vertical
+    if (abs(output) > 2)
+    {
+      motorPowerA = constrain(abs(output) + 30, 0, 250);
+      motorPowerB = constrain(abs(output) + 25, 0, 250);
+    }
 
     // One direction case
-    if (output > 0)
+    if (output > 2)
     {
-      analogWrite(PWMA, motorPower);
-      analogWrite(PWMB, motorPower);
+      analogWrite(PWMA, motorPowerA);
+      analogWrite(PWMB, motorPowerB);
 
       digitalWrite(AIN1, HIGH);
       digitalWrite(AIN2, LOW);
@@ -104,10 +117,10 @@ void loop() {
     }
 
     // Other direction case
-    else if (output < 0)
+    else if (output < -2)
     {
-      analogWrite(PWMA, motorPower);
-      analogWrite(PWMB, motorPower);
+      analogWrite(PWMA, motorPowerA);
+      analogWrite(PWMB, motorPowerB);
 
       digitalWrite(AIN1, LOW);
       digitalWrite(AIN2, HIGH);
@@ -123,14 +136,20 @@ void loop() {
       analogWrite(PWMB, 0);
     }
 
-    Serial.print("Tilt: ");
+    Serial.print("Accel Tilt: "); //output values for debugging and tuning
     Serial.print(tilt);
 
-    Serial.print("  PID: ");
-    Serial.print(output);
+    Serial.print(" Gyro Y: ");
+    Serial.print(gyroY);
 
-    Serial.print("  Motor: ");
-    Serial.println(motorPower);
+    Serial.print(" Filtered: ");
+    Serial.print(filteredTilt);
+
+    Serial.print("  Motor A: ");
+    Serial.print(motorPowerA);
+
+    Serial.print("  Motor B: ");
+    Serial.println(motorPowerB);
 
     
 
